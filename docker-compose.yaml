@@ -1,0 +1,33 @@
+services:
+  streamlit-app:
+    build:
+      context: .
+      dockerfile: apps/chatbot-ui/Dockerfile
+    ports:
+      - 8501:8501
+    env_file:
+      - .env
+    restart: unless-stopped
+    volumes:
+      - ./apps/chatbot-ui/src:/app/apps/chatbot-ui/src
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    ports:
+      - 8000:8000
+    env_file:
+      - .env
+    restart: unless-stopped
+    volumes:
+      - ./apps/api/src:/app/apps/api/src
+
+  qdrant:
+    image: qdrant/qdrant
+    ports:
+      - 6333:6333
+      - 6334:6334
+    volumes:
+      - ./qdrant_storage:/qdrant/storage:z
+    restart: unless-stopped
