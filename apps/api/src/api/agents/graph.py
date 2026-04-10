@@ -10,7 +10,7 @@ from api.agents.utils.utils import get_tool_descriptions
 import numpy as np
 from typing import List, Dict, Any, Annotated
 from api.agents.agents import ToolCall, RAGUsedContext , agent_node, intent_router_node
-
+from langgraph.checkpoint.postgres import PostgresSaver
 
 
 
@@ -77,27 +77,35 @@ workflow.add_conditional_edges(
 
 workflow.add_edge("tool_node","agent_node")
 
-graph=workflow.compile()
+
 
 #### agent execution function
 
-def run_agent(question:str)->dict:
+def run_agent(question:str,thread_id:str)->dict:
 
     initial_state={
         "messages":[{"role":"user","content":question}],
         "iteration":0,
         "available_tools":tool_descriptions
     }
-    result =graph.invoke(initial_state)
+    config={
+        "configurable":{    
+            "thread_id":thread_id
+        }
+    }
+    with PostgresSaver.from_conn_string("postgresql://langgraph_user:langgraph_password@postgres:5432/langgraph_db") as checkpointer:
+        graph=workflow.compile(checkpointer=checkpointer)
+        result=graph.invoke(initial_state,config=config)
+
     return result
 
 
 
-def rag_agent_wrapper(question):
+def rag_agent_wrapper(question,thread_id):
 
     qdrant_client = QdrantClient(url="http://qdrant:6333")
 
-    result= run_agent(question)
+    result= run_agent(question, thread_id)
 
     used_context=[]
     dummy_vector=np.zeros(384).tolist()

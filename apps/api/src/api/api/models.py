@@ -3,6 +3,7 @@ from typing import Optional
 
 class RAGRequest(BaseModel):
     query: str=Field(..., description="The user's query for retrieval-augmented generation.")
+    thread_id: str=Field(..., description="The thread ID")
 
 class RAGUsedContext(BaseModel):
     image_url: str=Field(..., description="The URL of the image used to answer the question")
